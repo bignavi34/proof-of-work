@@ -5,9 +5,14 @@ from app.models.user import User
 from app.models.technician_access import TechnicianAccess
 from app.models.evidence import Evidence
 from app.models.evidence_analysis import EvidenceAnalysis
+from app.models.payment import Payment
 __all__ = [
     "AdminAccess",
     "Job",
     "ServiceRequest",
     "User",
+    "TechnicianAccess",
+    "Evidence",
+    "EvidenceAnalysis",
+    "Payment",
 ]

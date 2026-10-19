@@ -12,6 +12,7 @@ from app.auth.routes import router as auth_router
 from app.core.config import settings
 from app.users.routes import router as users_router
 from app.api.routes.ai import router as ai_router
+from app.api.routes.payments import router as payments_router
 app = FastAPI(
     title="Proof-of-Work API",
     version="0.1.0",
@@ -43,6 +44,7 @@ app.include_router(service_requests_router)
 app.include_router(jobs_router)
 app.include_router(evidence_router)
 app.include_router(ai_router)
+app.include_router(payments_router)
 @app.get("/")
 async def root():
     return {

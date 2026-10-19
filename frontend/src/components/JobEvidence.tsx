@@ -1,5 +1,4 @@
-
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 const API_URL = "http://localhost:8000";
 
@@ -43,6 +42,35 @@ interface EvidenceAnalysis {
   created_at: string;
 }
 
+type ComparisonAssessment =
+  | "improvement_visible"
+  | "no_clear_change"
+  | "possible_issue"
+  | "inconclusive";
+
+interface ComparisonResult {
+  before_observations: string[];
+  after_observations: string[];
+  changes_observed: string[];
+  job_relevance: string;
+  potential_issues: string[];
+  limitations: string[];
+  assessment: ComparisonAssessment;
+}
+
+interface ComparisonReport {
+  id: string;
+  evidence_id: string;
+  job_id: string;
+  model_name: string;
+  status: string;
+  result: ComparisonResult;
+  created_at: string;
+  analysis_type: "before_after_comparison";
+  before_evidence_ids: string[];
+  after_evidence_ids: string[];
+}
+
 interface Props {
   jobId: string;
 }
@@ -54,10 +82,35 @@ const assessmentLabels: Record<Assessment, string> = {
   inconclusive: "Inconclusive",
 };
 
+const comparisonAssessmentLabels: Record<ComparisonAssessment, string> = {
+  improvement_visible: "Improvement visible",
+  no_clear_change: "No clear change",
+  possible_issue: "Possible issue",
+  inconclusive: "Inconclusive",
+};
+
 function formatAssessment(assessment: string) {
   return (
     assessmentLabels[assessment as Assessment] ??
+    comparisonAssessmentLabels[assessment as ComparisonAssessment] ??
     "Unknown assessment"
+  );
+}
+
+function renderStringList(title: string, values: string[]) {
+  return (
+    <div>
+      <h5>{title}</h5>
+      {values.length > 0 ? (
+        <ul>
+          {values.map((value, index) => (
+            <li key={`${title}-${index}`}>{value}</li>
+          ))}
+        </ul>
+      ) : (
+        <p>None reported.</p>
+      )}
+    </div>
   );
 }
 
@@ -74,6 +127,48 @@ export default function JobEvidence({ jobId }: Props) {
   const [analysisErrors, setAnalysisErrors] = useState<
     Record<string, string>
   >({});
+  const [comparison, setComparison] =
+    useState<ComparisonReport | null>(null);
+  const [comparisonLoading, setComparisonLoading] = useState(false);
+  const [comparisonError, setComparisonError] = useState("");
+  const [comparisonRunning, setComparisonRunning] = useState(false);
+
+  const loadComparison = useCallback(async () => {
+    setComparisonLoading(true);
+    setComparisonError("");
+
+    try {
+      const response = await fetch(
+        `${API_URL}/jobs/${jobId}/evidence/comparison`,
+        { credentials: "include" },
+      );
+
+      if (response.status === 404) {
+        setComparison(null);
+        return;
+      }
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        const detail =
+          typeof body?.detail === "string"
+            ? body.detail
+            : `Could not load comparison (${response.status})`;
+        throw new Error(detail);
+      }
+
+      const report = (await response.json()) as ComparisonReport;
+      setComparison(report);
+    } catch (err) {
+      setComparisonError(
+        err instanceof Error
+          ? err.message
+          : "Could not load comparison report",
+      );
+    } finally {
+      setComparisonLoading(false);
+    }
+  }, [jobId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -99,10 +194,9 @@ export default function JobEvidence({ jobId }: Props) {
         const data: Evidence[] = await response.json();
 
         if (cancelled) return;
-
         setItems(data);
 
-        // Load saved analyses without triggering new AI calls.
+        // Load saved single-image analyses without triggering AI requests.
         const savedAnalyses = await Promise.all(
           data.map(async (item) => {
             try {
@@ -111,10 +205,7 @@ export default function JobEvidence({ jobId }: Props) {
                 { credentials: "include" },
               );
 
-              // No saved analysis is a normal state.
-              if (analysisResponse.status === 404) {
-                return null;
-              }
+              if (analysisResponse.status === 404) return null;
 
               if (!analysisResponse.ok) {
                 throw new Error(
@@ -142,26 +233,20 @@ export default function JobEvidence({ jobId }: Props) {
         if (cancelled) return;
 
         const analysisMap: Record<string, EvidenceAnalysis> = {};
-
         for (const analysis of savedAnalyses) {
           if (analysis) {
             analysisMap[analysis.evidence_id] = analysis;
           }
         }
-
         setAnalyses(analysisMap);
       } catch (err) {
         if (!cancelled) {
           setError(
-            err instanceof Error
-              ? err.message
-              : "Could not load evidence",
+            err instanceof Error ? err.message : "Could not load evidence",
           );
         }
       } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+        if (!cancelled) setLoading(false);
       }
     }
 
@@ -172,16 +257,16 @@ export default function JobEvidence({ jobId }: Props) {
     };
   }, [jobId]);
 
+  useEffect(() => {
+    void loadComparison();
+  }, [loadComparison]);
+
   async function analyzeEvidence(evidenceId: string) {
     setAnalysisLoading((previous) => ({
       ...previous,
       [evidenceId]: true,
     }));
-
-    setAnalysisErrors((previous) => ({
-      ...previous,
-      [evidenceId]: "",
-    }));
+    setAnalysisErrors((previous) => ({ ...previous, [evidenceId]: "" }));
 
     try {
       const response = await fetch(
@@ -198,12 +283,10 @@ export default function JobEvidence({ jobId }: Props) {
           typeof body?.detail === "string"
             ? body.detail
             : `Analysis failed (${response.status})`;
-
         throw new Error(detail);
       }
 
-      const analysis: EvidenceAnalysis = await response.json();
-
+      const analysis = (await response.json()) as EvidenceAnalysis;
       setAnalyses((previous) => ({
         ...previous,
         [evidenceId]: analysis,
@@ -212,9 +295,7 @@ export default function JobEvidence({ jobId }: Props) {
       setAnalysisErrors((previous) => ({
         ...previous,
         [evidenceId]:
-          err instanceof Error
-            ? err.message
-            : "Could not analyze evidence",
+          err instanceof Error ? err.message : "Could not analyze evidence",
       }));
     } finally {
       setAnalysisLoading((previous) => ({
@@ -224,21 +305,166 @@ export default function JobEvidence({ jobId }: Props) {
     }
   }
 
+  async function runComparison() {
+    setComparisonRunning(true);
+    setComparisonError("");
+
+    try {
+      const response = await fetch(
+        `${API_URL}/jobs/${jobId}/evidence/compare`,
+        {
+          method: "POST",
+          credentials: "include",
+        },
+      );
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        const detail =
+          typeof body?.detail === "string"
+            ? body.detail
+            : `Comparison failed (${response.status})`;
+        throw new Error(detail);
+      }
+
+      const report = (await response.json()) as ComparisonReport;
+      setComparison(report);
+    } catch (err) {
+      setComparisonError(
+        err instanceof Error ? err.message : "Could not compare evidence",
+      );
+    } finally {
+      setComparisonRunning(false);
+    }
+  }
+
+  const beforeCount = items.filter((item) =>
+    ["before", "before_service"].includes(item.evidence_type),
+  ).length;
+  const afterCount = items.filter((item) =>
+    ["after", "after_service"].includes(item.evidence_type),
+  ).length;
+  const canCompare = beforeCount > 0 && afterCount > 0;
+
   return (
     <section style={{ marginTop: "20px" }}>
       <h3>Proof of Work</h3>
 
       {loading && <p>Loading evidence...</p>}
-      {error && <p className="error-message">{error}</p>}
+      {error && <p className="error-message" role="alert">{error}</p>}
 
       {!loading && !error && items.length === 0 && (
         <p>No evidence has been uploaded yet.</p>
       )}
 
+      {!loading && items.length > 0 && (
+        <section
+          aria-labelledby="comparison-heading"
+          style={{
+            border: "1px solid #ddd",
+            borderRadius: "10px",
+            padding: "16px",
+            marginTop: "12px",
+          }}
+        >
+          <h4 id="comparison-heading">Before/After AI Comparison</h4>
+          <p>
+            {beforeCount} before image(s) and {afterCount} after image(s)
+            available. The AI compares the available images together in one
+            request.
+          </p>
+
+          <button
+            type="button"
+            onClick={() => void runComparison()}
+            disabled={!canCompare || comparisonRunning || comparisonLoading}
+          >
+            {comparisonRunning
+              ? "Comparing images..."
+              : comparison
+                ? "Run comparison again"
+                : "Compare before and after"}
+          </button>
+
+          {!canCompare && (
+            <p>
+              Upload at least one before image and one after image to enable
+              comparison.
+            </p>
+          )}
+
+          {comparisonLoading && <p>Loading saved comparison...</p>}
+          {comparisonError && (
+            <p className="error-message" role="alert">
+              {comparisonError}
+            </p>
+          )}
+
+          {comparison && (
+            <div
+              style={{
+                marginTop: "16px",
+                padding: "14px",
+                border: "1px solid #ddd",
+                borderRadius: "8px",
+              }}
+            >
+              <p>
+                <strong>Assessment:</strong>{" "}
+                {formatAssessment(comparison.result.assessment)}
+              </p>
+              <p>
+                <strong>Job relevance:</strong>{" "}
+                {comparison.result.job_relevance}
+              </p>
+              <p>
+                <strong>Model:</strong> {comparison.model_name}
+              </p>
+              <p>
+                <strong>Compared:</strong>{" "}
+                {new Date(comparison.created_at).toLocaleString()}
+              </p>
+              <p>
+                <strong>Images compared:</strong>{" "}
+                {comparison.before_evidence_ids.length} before,{" "}
+                {comparison.after_evidence_ids.length} after
+              </p>
+
+              {renderStringList(
+                "Before observations",
+                comparison.result.before_observations ?? [],
+              )}
+              {renderStringList(
+                "After observations",
+                comparison.result.after_observations ?? [],
+              )}
+              {renderStringList(
+                "Changes observed",
+                comparison.result.changes_observed ?? [],
+              )}
+              {renderStringList(
+                "Potential issues",
+                comparison.result.potential_issues ?? [],
+              )}
+              {renderStringList(
+                "Limitations",
+                comparison.result.limitations ?? [],
+              )}
+
+              <p>
+                <small>
+                  AI comparison is an aid to reviewing evidence, not
+                  independent proof that the work was completed.
+                </small>
+              </p>
+            </div>
+          )}
+        </section>
+      )}
+
       {items.map((item) => {
         const imageUrl =
           `${API_URL}/jobs/${jobId}/evidence/${item.id}/file`;
-
         const analysis = analyses[item.id];
         const isAnalyzing = Boolean(analysisLoading[item.id]);
         const currentAnalysisError = analysisErrors[item.id];
@@ -270,10 +496,7 @@ export default function JobEvidence({ jobId }: Props) {
               }}
             />
 
-            <p>
-              <strong>File:</strong> {item.original_filename}
-            </p>
-
+            <p><strong>File:</strong> {item.original_filename}</p>
             <p>
               <strong>Uploaded:</strong>{" "}
               {new Date(item.uploaded_at).toLocaleString()}
@@ -286,13 +509,11 @@ export default function JobEvidence({ jobId }: Props) {
               </p>
             )}
 
-            {item.latitude !== null &&
-              item.longitude !== null && (
-                <p>
-                  <strong>Location:</strong>{" "}
-                  {item.latitude}, {item.longitude}
-                </p>
-              )}
+            {item.latitude !== null && item.longitude !== null && (
+              <p>
+                <strong>Location:</strong> {item.latitude}, {item.longitude}
+              </p>
+            )}
 
             {item.description && <p>{item.description}</p>}
 
@@ -306,14 +527,11 @@ export default function JobEvidence({ jobId }: Props) {
             {item.measurements && (
               <div>
                 <strong>Measurements</strong>
-                <pre>
-                  {JSON.stringify(item.measurements, null, 2)}
-                </pre>
+                <pre>{JSON.stringify(item.measurements, null, 2)}</pre>
               </div>
             )}
 
             <hr />
-
             <h4>AI Evidence Analysis</h4>
 
             <button
@@ -347,52 +565,27 @@ export default function JobEvidence({ jobId }: Props) {
                   <strong>Assessment:</strong>{" "}
                   {formatAssessment(analysis.result.assessment)}
                 </p>
-
                 <p>
                   <strong>Job relevance:</strong>{" "}
                   {analysis.result.job_relevance}
                 </p>
-
-                <p>
-                  <strong>Model:</strong> {analysis.model_name}
-                </p>
-
+                <p><strong>Model:</strong> {analysis.model_name}</p>
                 <p>
                   <strong>Analyzed:</strong>{" "}
                   {new Date(analysis.created_at).toLocaleString()}
                 </p>
 
-                <h5>Observations</h5>
-                {analysis.result.observations.length > 0 ? (
-                  <ul>
-                    {analysis.result.observations.map((observation, i) => (
-                      <li key={i}>{observation}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>No observations provided.</p>
+                {renderStringList(
+                  "Observations",
+                  analysis.result.observations ?? [],
                 )}
-
-                <h5>Potential issues</h5>
-                {analysis.result.potential_issues.length > 0 ? (
-                  <ul>
-                    {analysis.result.potential_issues.map((issue, i) => (
-                      <li key={i}>{issue}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>No potential issues reported.</p>
+                {renderStringList(
+                  "Potential issues",
+                  analysis.result.potential_issues ?? [],
                 )}
-
-                <h5>Limitations</h5>
-                {analysis.result.limitations.length > 0 ? (
-                  <ul>
-                    {analysis.result.limitations.map((limitation, i) => (
-                      <li key={i}>{limitation}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>No limitations reported.</p>
+                {renderStringList(
+                  "Limitations",
+                  analysis.result.limitations ?? [],
                 )}
 
                 <p>
@@ -406,8 +599,8 @@ export default function JobEvidence({ jobId }: Props) {
 
             {!analysis && !isAnalyzing && !currentAnalysisError && (
               <p>
-                No saved analysis is available. Select Analyze evidence
-                to evaluate this image against the service request.
+                No saved analysis is available. Select Analyze evidence to
+                evaluate this image against the service request.
               </p>
             )}
           </article>

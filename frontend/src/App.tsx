@@ -19,6 +19,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import TechnicianJobs from "./pages/TechnicianJobs";
 import ServiceRequests from "./pages/ServiceRequests";
 import AdminTechnicians from "./pages/AdminTechnicians";
+import AdminEvidence from "./pages/AdminEvidence";
 export default function App() {
   return (
     <BrowserRouter>
@@ -110,19 +111,13 @@ export default function App() {
     path="technicians"
     element={<AdminTechnicians />}
   />
-
   <Route
     path="evidence"
-    element={
-      <div className="page-placeholder">
-        <p className="eyebrow">Operations</p>
-        <h1>Evidence</h1>
-        <p>Review submitted proof of work.</p>
-      </div>
-    }
+    element={<AdminEvidence />}
   />
-</Route>
-        <Route
+  </Route>
+
+    <Route
           path="*"
           element={<Navigate to="/dashboard" replace />}
         />

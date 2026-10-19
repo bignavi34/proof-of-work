@@ -8,7 +8,8 @@ from app.core.database import get_db
 from app.models.admin_access import AdminAccess
 from app.models.user import User
 from uuid import UUID
-
+from app.models.payment import Payment
+from app.schemas.payment import PaymentResponse
 from app.models.technician_access import TechnicianAccess
 
 from app.models.service_request import ServiceRequest
@@ -379,3 +380,12 @@ async def assign_technician(
         "created_at": job.created_at,
         "updated_at": job.updated_at,
     }
+@router.get("/payments", response_model=list[PaymentResponse])
+async def list_payments(
+    current_admin=Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+) -> list[Payment]:
+    result = await db.execute(
+        select(Payment).order_by(Payment.created_at.desc())
+    )
+    return list(result.scalars().all())
