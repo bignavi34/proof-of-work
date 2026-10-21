@@ -22,6 +22,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
+        "https://proof-of-work-1.onrender.com",
+
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -31,8 +33,8 @@ app.add_middleware(
 app.add_middleware(
     SessionMiddleware,
     secret_key=settings.session_secret,
-    https_only=False,
-    same_site="lax",
+    https_only=True,
+    same_site="none",
 )
 
 app.state.oauth = oauth
