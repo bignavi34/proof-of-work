@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 
-const API_URL = "http://localhost:8000";
-
+import { API_URL } from "../api/config";
 export default function LoginPage() {
 const error = useMemo(() => {
   const params = new URLSearchParams(window.location.search);

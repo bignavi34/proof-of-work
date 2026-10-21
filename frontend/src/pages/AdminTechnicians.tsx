@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
-const API_URL = "http://localhost:8000";
-
+import { API_URL } from "../api/config";
 interface Technician {
   id: string;
   email: string;

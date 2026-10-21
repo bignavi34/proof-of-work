@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-
+import { API_URL } from "../api/config";
 interface ServiceRequest {
   id: string;
   customer_id: string;
@@ -25,7 +25,7 @@ export default function AdminServiceRequests() {
       setError("");
 
       const response = await fetch(
-        "http://localhost:8000/admin/service-requests",
+       `${API_URL}/admin/service-requests`,
         {
           credentials: "include",
         },
@@ -61,7 +61,7 @@ export default function AdminServiceRequests() {
 
     try {
       const response = await fetch(
-        `http://localhost:8000/admin/service-requests/${id}/accept`,
+        `${API_URL}/admin/service-requests/${id}/accept`,
         {
           method: "POST",
           credentials: "include",
@@ -102,7 +102,7 @@ export default function AdminServiceRequests() {
 
     try {
       const response = await fetch(
-        `http://localhost:8000/admin/service-requests/${id}/reject`,
+        `${API_URL}/admin/service-requests/${id}/reject`,
         {
           method: "POST",
           credentials: "include",

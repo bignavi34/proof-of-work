@@ -7,8 +7,7 @@ export interface User {
   role: "customer" | "technician" | "company_admin";
 }
 
-const API_URL = "http://localhost:8000";
-
+import { API_URL } from "./config";
 export async function getCurrentUser(): Promise<User | null> {
   const response = await fetch(`${API_URL}/users/me`, {
     credentials: "include",

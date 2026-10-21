@@ -2,8 +2,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 
-const API_URL = "http://localhost:8000";
-
+import { API_URL } from "../api/config";
 interface Job {
   id: string;
   service_request_id: string;

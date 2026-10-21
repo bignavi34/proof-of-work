@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
-
+import { API_URL } from "../api/config";
 interface ServiceRequest {
   id: string;
   service_type: string;
@@ -29,7 +29,8 @@ export default function ServiceRequests() {
       setError("");
 
       const response = await fetch(
-        "http://localhost:8000/service-requests/my",
+       `${API_URL}/service-requests/my`
+,
         {
           credentials: "include",
         },
@@ -65,7 +66,7 @@ export default function ServiceRequests() {
 
     try {
       const response = await fetch(
-        "http://localhost:8000/service-requests",
+        `${API_URL}/service-requests`,
         {
           method: "POST",
           credentials: "include",

@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from "react";
 import JobEvidence from "../components/JobEvidence";
+import { API_URL } from "../api/config";
 
 interface Job {
   id: string;
@@ -12,8 +13,6 @@ interface Job {
   created_at: string;
   updated_at: string;
 }
-
-const API_URL = "http://localhost:8000";
 
 // Accept common completed-status spellings.
 function isCompleted(status: string): boolean {

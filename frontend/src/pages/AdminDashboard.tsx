@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import AIWorkSearch from "../components/AIWorkSearch";
+import { API_URL } from "../api/config";
 interface AdminAccess {
   id: string;
   email: string;
@@ -17,7 +18,7 @@ export default function AdminDashboard() {
   async function loadAdmins() {
     try {
       const response = await fetch(
-        "http://localhost:8000/admin/access",
+        `${API_URL}/admin/access`,
         {
           credentials: "include",
         },
@@ -55,7 +56,7 @@ useEffect(() => {
 
     try {
       const response = await fetch(
-        "http://localhost:8000/admin/access",
+        `${API_URL}/admin/access`,
         {
           method: "POST",
           credentials: "include",

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { logout } from "../api/client";
-
+import { API_URL } from "../api/config";
 interface User {
   id: string;
   email: string;
@@ -60,12 +60,9 @@ export default function Dashboard() {
 
   useEffect(() => {
     async function loadUser() {
-      const response = await fetch(
-        "http://localhost:8000/users/me",
-        {
-          credentials: "include",
-        },
-      );
+    const response = await fetch(`${API_URL}/users/me`, {
+    credentials: "include",
+    }); 
 
       if (response.ok) {
         const data: User = await response.json();

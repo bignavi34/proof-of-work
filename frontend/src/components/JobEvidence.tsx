@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-const API_URL = "http://localhost:8000";
-
+import { API_URL } from "../api/config";
 interface Evidence {
   id: string;
   job_id: string;

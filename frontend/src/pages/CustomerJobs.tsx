@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import JobEvidence from "../components/JobEvidence";
 
-const API_URL = "http://localhost:8000";
-
+import { API_URL } from "../api/config";
 interface Job {
   id: string;
   service_request_id: string;

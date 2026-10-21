@@ -2,8 +2,7 @@ import { logout } from "../api/auth";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const API_URL = "http://localhost:8000";
-
+import { API_URL } from "../api/config";
 interface Job {
   id: string;
   service_request_id: string;
