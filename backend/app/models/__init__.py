@@ -6,6 +6,7 @@ from app.models.technician_access import TechnicianAccess
 from app.models.evidence import Evidence
 from app.models.evidence_analysis import EvidenceAnalysis
 from app.models.payment import Payment
+from app.models.user_credential import UserCredential
 __all__ = [
     "AdminAccess",
     "Job",
