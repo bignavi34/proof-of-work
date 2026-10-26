@@ -7,8 +7,7 @@ class Settings(BaseSettings):
     google_client_secret: str
     google_redirect_uri: str
     session_secret: str
-
-    frontend_url: str = "http://localhost:5173"
+    frontend_url: str = "http://localhost:5174"
 
     openrouter_api_key: str | None = None
     openrouter_model: str = "dots-studio/dots-3-note-preview:free"
