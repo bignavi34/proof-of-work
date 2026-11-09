@@ -6,6 +6,7 @@ import type { User } from "../api/auth";
 
 export default function AdminLayout() {
   const [user, setUser] = useState<User | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,7 +24,15 @@ export default function AdminLayout() {
 
   return (
     <div className="app-shell">
-      <aside className="sidebar admin-sidebar">
+      {mobileMenuOpen && (
+        <div
+          className="sidebar-backdrop"
+          onClick={() => setMobileMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      <aside className={`sidebar admin-sidebar ${mobileMenuOpen ? "open" : ""}`}>
         <div className="sidebar-brand">
           <div className="brand-mark">PW</div>
 
@@ -39,6 +48,7 @@ export default function AdminLayout() {
           <NavLink
             to="/admin"
             end
+            onClick={() => setMobileMenuOpen(false)}
             className={({ isActive }) =>
               `sidebar-link ${isActive ? "active" : ""}`
             }
@@ -48,6 +58,7 @@ export default function AdminLayout() {
 
           <NavLink
             to="/admin/requests"
+            onClick={() => setMobileMenuOpen(false)}
             className={({ isActive }) =>
               `sidebar-link ${isActive ? "active" : ""}`
             }
@@ -57,6 +68,7 @@ export default function AdminLayout() {
 
           <NavLink
             to="/admin/technicians"
+            onClick={() => setMobileMenuOpen(false)}
             className={({ isActive }) =>
               `sidebar-link ${isActive ? "active" : ""}`
             }
@@ -66,6 +78,7 @@ export default function AdminLayout() {
 
           <NavLink
             to="/admin/jobs"
+            onClick={() => setMobileMenuOpen(false)}
             className={({ isActive }) =>
               `sidebar-link ${isActive ? "active" : ""}`
             }
@@ -75,6 +88,7 @@ export default function AdminLayout() {
 
           <NavLink
             to="/admin/evidence"
+            onClick={() => setMobileMenuOpen(false)}
             className={({ isActive }) =>
               `sidebar-link ${isActive ? "active" : ""}`
             }
@@ -107,12 +121,29 @@ export default function AdminLayout() {
 
       <div className="main-area">
         <header className="mobile-topbar">
-          <strong>Company Console</strong>
+          <button
+            type="button"
+            className="mobile-menu-btn"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileMenuOpen}
+          >
+            <span className="hamburger-box">
+              <span className={`hamburger-bar ${mobileMenuOpen ? "bar-1-open" : ""}`} />
+              <span className={`hamburger-bar ${mobileMenuOpen ? "bar-2-open" : ""}`} />
+              <span className={`hamburger-bar ${mobileMenuOpen ? "bar-3-open" : ""}`} />
+            </span>
+          </button>
+
+          <div className="mobile-topbar-brand">
+            <div className="brand-mark mobile-brand-mark">PW</div>
+            <strong>Company Console</strong>
+          </div>
 
           <button
             type="button"
             onClick={handleLogout}
-            className="logout-button"
+            className="logout-button mobile-logout-btn"
           >
             Logout
           </button>

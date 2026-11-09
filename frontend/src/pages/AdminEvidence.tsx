@@ -94,18 +94,18 @@ export default function AdminEvidence() {
         </p>
       </section>
 
-      <section className="request-list">
-        <article className="request-item">
+      <section className="admin-stats-grid">
+        <article className="dashboard-card admin-stat-card">
           <p className="eyebrow">Total jobs</p>
           <h2>{jobs.length}</h2>
         </article>
 
-        <article className="request-item">
+        <article className="dashboard-card admin-stat-card">
           <p className="eyebrow">Active jobs</p>
           <h2>{activeCount}</h2>
         </article>
 
-        <article className="request-item">
+        <article className="dashboard-card admin-stat-card">
           <p className="eyebrow">Completed jobs</p>
           <h2>{completedCount}</h2>
         </article>
@@ -133,7 +133,7 @@ export default function AdminEvidence() {
           <option value="completed">Completed jobs</option>
         </select>
 
-        <button type="button" onClick={() => void loadJobs()}>
+        <button type="button" className="secondary-button" style={{ marginTop: "12px" }} onClick={() => void loadJobs()}>
           Refresh jobs
         </button>
       </section>
@@ -185,6 +185,7 @@ export default function AdminEvidence() {
 
                 <button
                   type="button"
+                  className="secondary-button"
                   onClick={() =>
                     setExpandedJobId(expanded ? null : job.id)
                   }

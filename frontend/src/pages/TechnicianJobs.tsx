@@ -130,14 +130,7 @@ export default function TechnicianJobs() {
                 </div>
               </div>
 
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "flex-end",
-                  gap: "12px",
-                }}
-              >
+              <div className="technician-job-actions">
                 <span
                   className={`status-badge status-${job.status}`}
                 >
@@ -147,6 +140,7 @@ export default function TechnicianJobs() {
 
                 <button
                   type="button"
+                  className="primary-button"
                   onClick={() =>
                     navigate(
                       `/technician/jobs/${job.id}`,
@@ -161,9 +155,10 @@ export default function TechnicianJobs() {
         </section>
       )}
 
-      <section className="dashboard-card">
+      <section className="dashboard-card" style={{ display: "flex", justifyContent: "flex-end" }}>
         <button
           type="button"
+          className="secondary-button"
           onClick={() => void handleLogout()}
         >
           Logout

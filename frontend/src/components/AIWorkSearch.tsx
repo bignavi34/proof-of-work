@@ -58,7 +58,7 @@ export default function AIWorkSearch({
     }
   }
 
-  function useExample(example: string) {
+  function handleSelectExample(example: string) {
     setQuestion(example);
     setError("");
   }
@@ -127,7 +127,7 @@ export default function AIWorkSearch({
               key={example}
               type="button"
               className="ai-example-button"
-              onClick={() => useExample(example)}
+              onClick={() => handleSelectExample(example)}
               disabled={loading}
             >
               {example}

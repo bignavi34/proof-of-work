@@ -85,24 +85,28 @@ export default function CompletedWork() {
       ) : (
         <section className="request-list">
           {jobs.map((job) => (
-            <article className="request-item" key={job.id}>
-              <div>
-                <strong>Service job</strong>
-                <p>
-                  Completed job ID: {job.id}
-                </p>
-                <p>
-                  Created{" "}
-                  {new Date(job.created_at).toLocaleString()}
-                </p>
+            <article className="request-item job-card" key={job.id}>
+              <div className="job-card-header">
+                <div>
+                  <strong>Service job</strong>
+                  <p>
+                    Completed job ID: {job.id}
+                  </p>
+                  <p>
+                    Created{" "}
+                    {new Date(job.created_at).toLocaleString()}
+                  </p>
+                </div>
+
+                <span className="status-badge status-completed">
+                  <span />
+                  Completed
+                </span>
               </div>
 
-              <span className="status-badge status-completed">
-                <span />
-                Completed
-              </span>
-
-              <JobEvidence jobId={job.id} />
+              <div className="job-card-evidence">
+                <JobEvidence jobId={job.id} />
+              </div>
             </article>
           ))}
         </section>

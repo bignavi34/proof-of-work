@@ -162,15 +162,15 @@ export default function AdminTechnicians() {
               width: "100%",
               maxWidth: "500px",
               marginTop: "8px",
-              padding: "10px",
             }}
           />
 
           <button
             type="submit"
+            className="primary-button"
             disabled={adding || !email.trim()}
             style={{
-              marginTop: "12px",
+              marginTop: "16px",
             }}
           >
             {adding ? "Adding..." : "Add Technician"}

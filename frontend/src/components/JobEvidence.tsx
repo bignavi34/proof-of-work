@@ -346,28 +346,23 @@ export default function JobEvidence({ jobId }: Props) {
   const canCompare = beforeCount > 0 && afterCount > 0;
 
   return (
-    <section style={{ marginTop: "20px" }}>
-      <h3>Proof of Work</h3>
+    <section className="job-evidence-section">
+      <h3 className="job-evidence-title">Proof of Work</h3>
 
       {loading && <p>Loading evidence...</p>}
       {error && <p className="error-message" role="alert">{error}</p>}
 
       {!loading && !error && items.length === 0 && (
-        <p>No evidence has been uploaded yet.</p>
+        <p className="evidence-empty-text">No evidence has been uploaded yet.</p>
       )}
 
       {!loading && items.length > 0 && (
         <section
           aria-labelledby="comparison-heading"
-          style={{
-            border: "1px solid #ddd",
-            borderRadius: "10px",
-            padding: "16px",
-            marginTop: "12px",
-          }}
+          className="evidence-comparison-card"
         >
           <h4 id="comparison-heading">Before/After AI Comparison</h4>
-          <p>
+          <p className="evidence-comparison-subtitle">
             {beforeCount} before image(s) and {afterCount} after image(s)
             available. The AI compares the available images together in one
             request.
@@ -375,6 +370,7 @@ export default function JobEvidence({ jobId }: Props) {
 
           <button
             type="button"
+            className="primary-button"
             onClick={() => void runComparison()}
             disabled={!canCompare || comparisonRunning || comparisonLoading}
           >
@@ -386,7 +382,7 @@ export default function JobEvidence({ jobId }: Props) {
           </button>
 
           {!canCompare && (
-            <p>
+            <p className="evidence-hint">
               Upload at least one before image and one after image to enable
               comparison.
             </p>
@@ -400,17 +396,12 @@ export default function JobEvidence({ jobId }: Props) {
           )}
 
           {comparison && (
-            <div
-              style={{
-                marginTop: "16px",
-                padding: "14px",
-                border: "1px solid #ddd",
-                borderRadius: "8px",
-              }}
-            >
+            <div className="evidence-analysis-box">
               <p>
                 <strong>Assessment:</strong>{" "}
-                {formatAssessment(comparison.result.assessment)}
+                <span className={`status-badge status-${comparison.result.assessment}`}>
+                  {formatAssessment(comparison.result.assessment)}
+                </span>
               </p>
               <p>
                 <strong>Job relevance:</strong>{" "}
@@ -450,7 +441,7 @@ export default function JobEvidence({ jobId }: Props) {
                 comparison.result.limitations ?? [],
               )}
 
-              <p>
+              <p className="evidence-disclaimer">
                 <small>
                   AI comparison is an aid to reviewing evidence, not
                   independent proof that the work was completed.
@@ -471,12 +462,7 @@ export default function JobEvidence({ jobId }: Props) {
         return (
           <article
             key={item.id}
-            style={{
-              border: "1px solid #ddd",
-              borderRadius: "10px",
-              padding: "16px",
-              marginTop: "12px",
-            }}
+            className="evidence-item-card"
           >
             <h4>{item.evidence_type.replaceAll("_", " ")}</h4>
 
@@ -484,15 +470,7 @@ export default function JobEvidence({ jobId }: Props) {
               src={imageUrl}
               alt={item.description || item.evidence_type}
               loading="lazy"
-              style={{
-                display: "block",
-                width: "100%",
-                maxWidth: "480px",
-                maxHeight: "360px",
-                objectFit: "contain",
-                borderRadius: "8px",
-                background: "#f4f4f4",
-              }}
+              className="evidence-image-preview"
             />
 
             <p><strong>File:</strong> {item.original_filename}</p>
@@ -517,24 +495,25 @@ export default function JobEvidence({ jobId }: Props) {
             {item.description && <p>{item.description}</p>}
 
             {item.checklist && (
-              <div>
+              <div className="evidence-json-section">
                 <strong>Checklist</strong>
-                <pre>{JSON.stringify(item.checklist, null, 2)}</pre>
+                <pre className="evidence-json-block">{JSON.stringify(item.checklist, null, 2)}</pre>
               </div>
             )}
 
             {item.measurements && (
-              <div>
+              <div className="evidence-json-section">
                 <strong>Measurements</strong>
-                <pre>{JSON.stringify(item.measurements, null, 2)}</pre>
+                <pre className="evidence-json-block">{JSON.stringify(item.measurements, null, 2)}</pre>
               </div>
             )}
 
-            <hr />
+            <hr className="evidence-divider" />
             <h4>AI Evidence Analysis</h4>
 
             <button
               type="button"
+              className="secondary-button"
               onClick={() => void analyzeEvidence(item.id)}
               disabled={isAnalyzing}
             >
@@ -552,17 +531,12 @@ export default function JobEvidence({ jobId }: Props) {
             )}
 
             {analysis && (
-              <div
-                style={{
-                  marginTop: "16px",
-                  padding: "14px",
-                  border: "1px solid #ddd",
-                  borderRadius: "8px",
-                }}
-              >
+              <div className="evidence-analysis-box">
                 <p>
                   <strong>Assessment:</strong>{" "}
-                  {formatAssessment(analysis.result.assessment)}
+                  <span className={`status-badge status-${analysis.result.assessment}`}>
+                    {formatAssessment(analysis.result.assessment)}
+                  </span>
                 </p>
                 <p>
                   <strong>Job relevance:</strong>{" "}
@@ -587,7 +561,7 @@ export default function JobEvidence({ jobId }: Props) {
                   analysis.result.limitations ?? [],
                 )}
 
-                <p>
+                <p className="evidence-disclaimer">
                   <small>
                     AI analysis is an aid to reviewing evidence, not
                     independent proof that the work was completed.
@@ -597,7 +571,7 @@ export default function JobEvidence({ jobId }: Props) {
             )}
 
             {!analysis && !isAnalyzing && !currentAnalysisError && (
-              <p>
+              <p className="evidence-hint">
                 No saved analysis is available. Select Analyze evidence to
                 evaluate this image against the service request.
               </p>

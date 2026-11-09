@@ -6,10 +6,10 @@ export default function CustomerDashboard() {
       <section className="welcome-section">
         <p className="eyebrow">Customer dashboard</p>
 
-        <h1>Hello</h1>
+        <h1>Welcome back</h1>
      
         <p>
-          Request a service and track your work.
+          Request a service, track progress, and review verified work.
         </p>
       </section>
       <AIWorkSearch audience="customer" />

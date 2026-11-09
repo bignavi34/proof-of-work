@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
+import { Link } from "react-router-dom";
 import AIWorkSearch from "../components/AIWorkSearch";
 import { API_URL } from "../api/config";
 interface AdminAccess {
@@ -108,7 +109,7 @@ useEffect(() => {
       </section>
        <AIWorkSearch audience="admin" />
       <section className="dashboard-grid">
-        <div className="dashboard-card">
+        <Link to="/admin/requests" className="dashboard-card">
           <h2>Incoming requests</h2>
           <p>
             Review and accept new customer requests.
@@ -116,9 +117,9 @@ useEffect(() => {
           <span className="action-link">
             Review requests →
           </span>
-        </div>
+        </Link>
 
-        <div className="dashboard-card">
+        <Link to="/admin/technicians" className="dashboard-card">
           <h2>Technicians</h2>
           <p>
             Manage technicians and their availability.
@@ -126,9 +127,9 @@ useEffect(() => {
           <span className="action-link">
             Manage technicians →
           </span>
-        </div>
+        </Link>
 
-        <div className="dashboard-card">
+        <Link to="/admin/jobs" className="dashboard-card">
           <h2>Active jobs</h2>
           <p>
             Monitor currently assigned service work.
@@ -136,9 +137,9 @@ useEffect(() => {
           <span className="action-link">
             View jobs →
           </span>
-        </div>
+        </Link>
 
-        <div className="dashboard-card">
+        <Link to="/admin/evidence" className="dashboard-card">
           <h2>Evidence</h2>
           <p>
             Review submitted proof-of-work evidence.
@@ -146,7 +147,7 @@ useEffect(() => {
           <span className="action-link">
             Review evidence →
           </span>
-        </div>
+        </Link>
       </section>
 
       <section className="admin-management-card">

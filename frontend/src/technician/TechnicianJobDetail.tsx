@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { FormEvent } from "react";
 
 import { API_URL } from "../api/config";
@@ -57,7 +57,7 @@ export default function TechnicianJobDetail() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  async function loadJob() {
+  const loadJob = useCallback(async () => {
     if (!jobId) {
       setError("Missing job ID.");
       setLoading(false);
@@ -112,11 +112,11 @@ export default function TechnicianJobDetail() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [jobId]);
 
   useEffect(() => {
     void loadJob();
-  }, [jobId]);
+  }, [loadJob]);
 
   function getCurrentLocation() {
     if (!navigator.geolocation) {
@@ -315,42 +315,43 @@ export default function TechnicianJobDetail() {
   }
 
   return (
-    <main
-      style={{
-        maxWidth: "1000px",
-        margin: "0 auto",
-        padding: "32px 24px",
-      }}
-    >
+    <main className="dashboard-container technician-detail-container">
       <button
         type="button"
+        className="secondary-button"
         onClick={() => navigate("/technician")}
         style={{ marginBottom: "24px" }}
       >
         ← Back to Jobs
       </button>
 
-      <header style={{ marginBottom: "32px" }}>
+      <header className="dashboard-card technician-header-card" style={{ marginBottom: "28px" }}>
+        <p className="eyebrow">Service Job</p>
         <h1>Job Evidence</h1>
         <p>
           <strong>Job ID:</strong> {job.id}
         </p>
         <p>
-          <strong>Status:</strong> {job.status}
+          <strong>Status:</strong>{" "}
+          <span className={`status-badge status-${job.status}`}>
+            <span />
+            {job.status}
+          </span>
         </p>
 
         {job.status === "assigned" && (
-          <div style={{ marginTop: "16px" }}>
+          <div className="technician-checklist-box" style={{ marginTop: "18px" }}>
             <p>
               Upload both before-service and after-service photos before
               completing this job.
             </p>
-            <p>
+            <p className="checklist-status">
               Evidence checklist: {hasBeforeEvidence ? "✓" : "○"} Before photo{" "}
               {hasAfterEvidence ? "✓" : "○"} After photo
             </p>
             <button
               type="button"
+              className="primary-button"
               onClick={handleCompleteJob}
               disabled={
                 completing ||
@@ -365,58 +366,34 @@ export default function TechnicianJobDetail() {
         )}
 
         {job.status === "completed" && (
-          <p style={{ color: "#15803d", fontWeight: 600 }}>
+          <div className="success-message" style={{ marginTop: "16px" }}>
             ✓ This job is completed.
-          </p>
+          </div>
         )}
       </header>
 
       {error && (
-        <div
-          role="alert"
-          style={{
-            padding: "12px",
-            marginBottom: "16px",
-            border: "1px solid #dc2626",
-            borderRadius: "8px",
-          }}
-        >
+        <div role="alert" className="error-message" style={{ marginBottom: "20px" }}>
           {error}
         </div>
       )}
 
       {success && (
-        <div
-          role="status"
-          style={{
-            padding: "12px",
-            marginBottom: "16px",
-            border: "1px solid #16a34a",
-            borderRadius: "8px",
-          }}
-        >
+        <div role="status" className="success-message" style={{ marginBottom: "20px" }}>
           {success}
         </div>
       )}
 
-      <section
-        style={{
-          padding: "24px",
-          border: "1px solid #ddd",
-          borderRadius: "12px",
-          marginBottom: "32px",
-        }}
-      >
+      <section className="dashboard-card technician-upload-card" style={{ marginBottom: "32px" }}>
         <h2>Upload Evidence</h2>
 
         {job.status === "completed" ? (
           <p>This job is complete. Evidence uploads are disabled.</p>
         ) : (
-          <form onSubmit={handleUpload}>
-            <div style={{ marginBottom: "16px" }}>
+          <form onSubmit={handleUpload} className="technician-upload-form">
+            <div className="form-group">
               <label>
                 <strong>Photo</strong>
-                <br />
                 <input
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
@@ -427,10 +404,9 @@ export default function TechnicianJobDetail() {
               </label>
             </div>
 
-            <div style={{ marginBottom: "16px" }}>
+            <div className="form-group">
               <label>
                 <strong>Evidence Type</strong>
-                <br />
                 <select
                   value={evidenceType}
                   onChange={(event) => setEvidenceType(event.target.value)}
@@ -452,18 +428,17 @@ export default function TechnicianJobDetail() {
                 flexWrap: "wrap",
               }}
             >
-              <button type="button" onClick={getCurrentLocation}>
+              <button type="button" className="secondary-button" onClick={getCurrentLocation}>
                 📍 Use Current Location
               </button>
-              <button type="button" onClick={setCurrentTimestamp}>
+              <button type="button" className="secondary-button" onClick={setCurrentTimestamp}>
                 🕐 Use Current Time
               </button>
             </div>
 
-            <div style={{ marginBottom: "16px" }}>
+            <div className="form-row">
               <label>
                 Latitude
-                <br />
                 <input
                   type="text"
                   value={latitude}
@@ -471,12 +446,9 @@ export default function TechnicianJobDetail() {
                   placeholder="23.520400"
                 />
               </label>
-            </div>
 
-            <div style={{ marginBottom: "16px" }}>
               <label>
                 Longitude
-                <br />
                 <input
                   type="text"
                   value={longitude}
@@ -486,10 +458,9 @@ export default function TechnicianJobDetail() {
               </label>
             </div>
 
-            <div style={{ marginBottom: "16px" }}>
+            <div className="form-group" style={{ marginTop: "16px" }}>
               <label>
                 Captured At
-                <br />
                 <input
                   type="text"
                   value={capturedAt}
@@ -499,47 +470,46 @@ export default function TechnicianJobDetail() {
               </label>
             </div>
 
-            <div style={{ marginBottom: "16px" }}>
+            <div className="form-group" style={{ marginTop: "16px" }}>
               <label>
                 Checklist JSON
-                <br />
                 <textarea
                   rows={4}
                   value={checklist}
                   onChange={(event) => setChecklist(event.target.value)}
-                  style={{ width: "100%" }}
                 />
               </label>
             </div>
 
-            <div style={{ marginBottom: "16px" }}>
+            <div className="form-group" style={{ marginTop: "16px" }}>
               <label>
                 Measurements JSON
-                <br />
                 <textarea
                   rows={4}
                   value={measurements}
                   onChange={(event) => setMeasurements(event.target.value)}
-                  style={{ width: "100%" }}
                 />
               </label>
             </div>
 
-            <div style={{ marginBottom: "16px" }}>
+            <div className="form-group" style={{ marginTop: "16px" }}>
               <label>
                 Description
-                <br />
                 <textarea
                   rows={4}
                   value={description}
                   onChange={(event) => setDescription(event.target.value)}
                   placeholder="Describe what this evidence shows..."
-                  style={{ width: "100%" }}
                 />
               </label>
             </div>
 
-            <button type="submit" disabled={uploading || completing}>
+            <button
+              type="submit"
+              className="primary-button"
+              disabled={uploading || completing}
+              style={{ marginTop: "20px" }}
+            >
               {uploading ? "Uploading..." : "Upload Evidence"}
             </button>
           </form>
@@ -547,66 +517,65 @@ export default function TechnicianJobDetail() {
       </section>
 
       <section>
-        <h2>Uploaded Evidence</h2>
+        <h2 style={{ marginBottom: "16px" }}>Uploaded Evidence</h2>
 
         {evidence.length === 0 ? (
-          <p>No evidence uploaded yet.</p>
+          <div className="dashboard-card">
+            <p>No evidence uploaded yet.</p>
+          </div>
         ) : (
-          <div>
+          <div className="request-list">
             {evidence.map((item) => (
               <article
                 key={item.id}
-                style={{
-                  padding: "20px",
-                  border: "1px solid #ddd",
-                  borderRadius: "12px",
-                  marginBottom: "16px",
-                }}
+                className="request-item"
               >
-                <h3>{item.evidence_type}</h3>
-                <p>
-                  <strong>File:</strong> {item.original_filename}
-                </p>
-                <p>
-                  <strong>Size:</strong> {(item.file_size / 1024).toFixed(1)} KB
-                </p>
-
-                {item.latitude !== null && item.longitude !== null && (
+                <div>
+                  <h3 style={{ margin: "0 0 8px" }}>{item.evidence_type.replaceAll("_", " ")}</h3>
                   <p>
-                    <strong>Location:</strong> {item.latitude}, {item.longitude}
+                    <strong>File:</strong> {item.original_filename}
                   </p>
-                )}
-
-                {item.captured_at && (
                   <p>
-                    <strong>Captured:</strong>{" "}
-                    {new Date(item.captured_at).toLocaleString()}
+                    <strong>Size:</strong> {(item.file_size / 1024).toFixed(1)} KB
                   </p>
-                )}
 
-                {item.description && (
-                  <p>
-                    <strong>Description:</strong> {item.description}
-                  </p>
-                )}
+                  {item.latitude !== null && item.longitude !== null && (
+                    <p>
+                      <strong>Location:</strong> {item.latitude}, {item.longitude}
+                    </p>
+                  )}
 
-                {item.checklist && (
-                  <div>
-                    <strong>Checklist</strong>
-                    <pre>{JSON.stringify(item.checklist, null, 2)}</pre>
-                  </div>
-                )}
+                  {item.captured_at && (
+                    <p>
+                      <strong>Captured:</strong>{" "}
+                      {new Date(item.captured_at).toLocaleString()}
+                    </p>
+                  )}
 
-                {item.measurements && (
-                  <div>
-                    <strong>Measurements</strong>
-                    <pre>{JSON.stringify(item.measurements, null, 2)}</pre>
-                  </div>
-                )}
+                  {item.description && (
+                    <p>
+                      <strong>Description:</strong> {item.description}
+                    </p>
+                  )}
 
-                <small>
-                  Uploaded {new Date(item.uploaded_at).toLocaleString()}
-                </small>
+                  {item.checklist && (
+                    <div style={{ marginTop: "10px" }}>
+                      <strong>Checklist</strong>
+                      <pre className="evidence-json-block">{JSON.stringify(item.checklist, null, 2)}</pre>
+                    </div>
+                  )}
+
+                  {item.measurements && (
+                    <div style={{ marginTop: "10px" }}>
+                      <strong>Measurements</strong>
+                      <pre className="evidence-json-block">{JSON.stringify(item.measurements, null, 2)}</pre>
+                    </div>
+                  )}
+
+                  <span style={{ display: "inline-block", marginTop: "12px" }}>
+                    Uploaded {new Date(item.uploaded_at).toLocaleString()}
+                  </span>
+                </div>
               </article>
             ))}
           </div>

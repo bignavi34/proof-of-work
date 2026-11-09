@@ -6,6 +6,7 @@ import type { User } from "../api/auth";
 
 export default function CustomerLayout() {
   const [user, setUser] = useState<User | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -39,7 +40,15 @@ export default function CustomerLayout() {
 
   return (
     <div className="app-shell">
-      <aside className="sidebar customer-sidebar">
+      {mobileMenuOpen && (
+        <div
+          className="sidebar-backdrop"
+          onClick={() => setMobileMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      <aside className={`sidebar customer-sidebar ${mobileMenuOpen ? "open" : ""}`}>
         <div className="sidebar-brand">
           <div className="brand-mark">PW</div>
 
@@ -55,6 +64,7 @@ export default function CustomerLayout() {
           <NavLink
             to="/customer"
             end
+            onClick={() => setMobileMenuOpen(false)}
             className={({ isActive }) =>
               `sidebar-link ${isActive ? "active" : ""}`
             }
@@ -64,6 +74,7 @@ export default function CustomerLayout() {
 
           <NavLink
             to="/customer/requests"
+            onClick={() => setMobileMenuOpen(false)}
             className={({ isActive }) =>
               `sidebar-link ${isActive ? "active" : ""}`
             }
@@ -73,6 +84,7 @@ export default function CustomerLayout() {
 
           <NavLink
             to="/customer/jobs"
+            onClick={() => setMobileMenuOpen(false)}
             className={({ isActive }) =>
               `sidebar-link ${isActive ? "active" : ""}`
             }
@@ -82,6 +94,7 @@ export default function CustomerLayout() {
 
           <NavLink
             to="/customer/completed"
+            onClick={() => setMobileMenuOpen(false)}
             className={({ isActive }) =>
               `sidebar-link ${isActive ? "active" : ""}`
             }
@@ -114,11 +127,28 @@ export default function CustomerLayout() {
 
       <div className="main-area">
         <header className="mobile-topbar">
-          <strong>Proof of Work</strong>
+          <button
+            type="button"
+            className="mobile-menu-btn"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileMenuOpen}
+          >
+            <span className="hamburger-box">
+              <span className={`hamburger-bar ${mobileMenuOpen ? "bar-1-open" : ""}`} />
+              <span className={`hamburger-bar ${mobileMenuOpen ? "bar-2-open" : ""}`} />
+              <span className={`hamburger-bar ${mobileMenuOpen ? "bar-3-open" : ""}`} />
+            </span>
+          </button>
+
+          <div className="mobile-topbar-brand">
+            <div className="brand-mark mobile-brand-mark">PW</div>
+            <strong>Proof of Work</strong>
+          </div>
 
           <button
             type="button"
-            className="logout-button"
+            className="logout-button mobile-logout-btn"
             onClick={handleLogout}
           >
             Logout

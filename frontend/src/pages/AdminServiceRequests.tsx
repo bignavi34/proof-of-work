@@ -222,6 +222,7 @@ export default function AdminServiceRequests() {
                     </button>
 
                     <button
+                      className="secondary-button"
                       disabled={
                         processingId === request.id
                       }

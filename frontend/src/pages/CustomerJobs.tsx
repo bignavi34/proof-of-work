@@ -288,55 +288,64 @@ export default function CustomerJobs() {
     const paid = payment?.status === "paid";
 
     return (
-      <article className="request-item" key={job.id}>
-        <div>
-          <strong>{request?.service_type ?? "Service job"}</strong>
-          <p>Job created {new Date(job.created_at).toLocaleString()}</p>
-          {request && <p>{request.description}</p>}
-          <p>
-            <strong>Job status:</strong> {job.status}
-          </p>
-        </div>
-
-        <span className={`status-badge status-${job.status}`}>
-          <span />
-          {job.status}
-        </span>
-
-        <div>
-          {payment ? (
+      <article className="request-item job-card" key={job.id}>
+        <div className="job-card-header">
+          <div className="job-card-details">
+            <strong>{request?.service_type ?? "Service job"}</strong>
+            <p>Job created {new Date(job.created_at).toLocaleString()}</p>
+            {request && <p>{request.description}</p>}
             <p>
-              <strong>Payment:</strong> {payment.status} · {payment.currency}{" "}
-              {(payment.amount_minor / 100).toLocaleString("en-IN", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+              <strong>Job status:</strong> {job.status}
             </p>
-          ) : (
-            <p>Payment record not available.</p>
-          )}
+          </div>
 
-          {paid ? (
-            <p>Payment complete</p>
-          ) : supportedService ? (
-            <button
-              className="primary-button"
-              type="button"
-              disabled={payingJobId !== null}
-              onClick={() => void startPayment(job)}
-            >
-              {payingJobId === job.id
-                ? "Opening checkout..."
-                : payment?.status === "created"
-                  ? "Continue to payment"
-                  : "Pay now"}
-            </button>
-          ) : (
-            <p>Online payment is not configured for this service.</p>
-          )}
+          <div className="job-card-actions">
+            <span className={`status-badge status-${job.status}`}>
+              <span />
+              {job.status}
+            </span>
+
+            {payment ? (
+              <p className="job-card-payment-info">
+                <strong>Payment:</strong> {payment.status} · {payment.currency}{" "}
+                {(payment.amount_minor / 100).toLocaleString("en-IN", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </p>
+            ) : (
+              <p className="job-card-payment-info">Payment record not available.</p>
+            )}
+
+            {paid ? (
+              <span className="status-badge status-paid">
+                <span />
+                Payment complete
+              </span>
+            ) : supportedService ? (
+              <button
+                className="primary-button job-pay-btn"
+                type="button"
+                disabled={payingJobId !== null}
+                onClick={() => void startPayment(job)}
+              >
+                {payingJobId === job.id
+                  ? "Opening checkout..."
+                  : payment?.status === "created"
+                    ? "Continue to payment"
+                    : "Pay now"}
+              </button>
+            ) : (
+              <p className="job-card-unsupported">
+                Online payment is not configured for this service.
+              </p>
+            )}
+          </div>
         </div>
 
-        <JobEvidence jobId={job.id} />
+        <div className="job-card-evidence">
+          <JobEvidence jobId={job.id} />
+        </div>
       </article>
     );
   }

@@ -296,6 +296,7 @@ export default function AdminJobs() {
 
                       <button
                         type="button"
+                        className="primary-button"
                         onClick={() =>
                           void assignTechnician(
                             job.id,
@@ -308,7 +309,7 @@ export default function AdminJobs() {
                           ]
                         }
                         style={{
-                          marginTop: "10px",
+                          marginTop: "12px",
                         }}
                       >
                         {isAssigning
