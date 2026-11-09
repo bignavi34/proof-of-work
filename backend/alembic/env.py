@@ -3,10 +3,9 @@ from logging.config import fileConfig
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
-
 from app.core.config import settings
 from app.core.database import Base
-from app.models import Payment, User, UserCredential  # noqa: F401
+from app.models import JobNotification, Payment, User, UserCredential
 config = context.config
 
 if config.config_file_name is not None:

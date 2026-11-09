@@ -1,7 +1,6 @@
-
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,8 +8,12 @@ from app.auth.dependencies import get_current_user
 from app.core.database import get_db
 from app.models.evidence import Evidence
 from app.models.job import Job
+from app.models.job_notification import JobNotification
 from app.models.user import User
 from app.schemas.job import JobResponse
+from app.services.job_completion_notifications import (
+    process_job_completion_notifications,
+)
 
 router = APIRouter(
     prefix="/jobs",
@@ -53,6 +56,7 @@ async def get_technician_jobs(
 @router.post("/{job_id}/complete", response_model=JobResponse)
 async def complete_job(
     job_id: UUID,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -86,8 +90,7 @@ async def complete_job(
         )
 
     evidence_result = await db.execute(
-        select(Evidence.evidence_type)
-        .where(
+        select(Evidence.evidence_type).where(
             Evidence.job_id == job.id,
             Evidence.technician_id == current_user.id,
             Evidence.evidence_type.in_(
@@ -102,8 +105,10 @@ async def complete_job(
 
     if not has_before or not has_after:
         missing = []
+
         if not has_before:
             missing.append("before-service")
+
         if not has_after:
             missing.append("after-service")
 
@@ -116,9 +121,63 @@ async def complete_job(
             ),
         )
 
+    customer = await db.get(User, job.customer_id)
+    technician = await db.get(User, job.technician_id)
+
+    if customer is None or technician is None:
+        raise HTTPException(
+            status_code=409,
+            detail="Could not find the job's customer or assigned technician",
+        )
+
+    recipients = [
+        {
+            "user": customer,
+            "type": "job_completed_customer",
+        },
+        {
+            "user": technician,
+            "type": "job_completed_technician",
+        },
+    ]
+
+    notifications = []
+
+    for recipient in recipients:
+        user = recipient["user"]
+
+        if not user.email:
+            continue
+
+        notifications.append(
+            JobNotification(
+                job_id=job.id,
+                recipient_user_id=user.id,
+                recipient_email=user.email,
+                recipient_name=user.name,
+                notification_type=recipient["type"],
+                status="pending",
+            )
+        )
+
     job.status = "completed"
+    db.add_all(notifications)
+
+    await db.flush()
+
+    notification_ids = [
+        notification.id
+        for notification in notifications
+    ]
+
     await db.commit()
     await db.refresh(job)
 
-    return job
+    if notification_ids:
+        background_tasks.add_task(
+            process_job_completion_notifications,
+            notification_ids,
+            db.bind,
+        )
 
+    return job

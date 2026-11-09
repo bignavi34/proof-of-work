@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     razorpay_key_id: str = ""
     razorpay_key_secret: str = ""
     razorpay_currency: str = "INR"
+    resend_api_key: str | None = None
+    email_from: str = "Proof of Work <onboarding@resend.dev>"
 
     model_config = SettingsConfigDict(
         env_file=".env",

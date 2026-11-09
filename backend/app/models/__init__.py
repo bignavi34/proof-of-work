@@ -7,6 +7,7 @@ from app.models.evidence import Evidence
 from app.models.evidence_analysis import EvidenceAnalysis
 from app.models.payment import Payment
 from app.models.user_credential import UserCredential
+from app.models.job_notification import JobNotification
 __all__ = [
     "AdminAccess",
     "Job",
