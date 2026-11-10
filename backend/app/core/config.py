@@ -1,3 +1,4 @@
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -15,12 +16,17 @@ class Settings(BaseSettings):
     cloudinary_cloud_name: str | None = None
     cloudinary_api_key: str | None = None
     cloudinary_api_secret: str | None = None
+
     razorpay_key_id: str = ""
     razorpay_key_secret: str = ""
     razorpay_currency: str = "INR"
-    resend_api_key: str | None = None
-    email_from: str = "Proof of Work <onboarding@resend.dev>"
 
+    # Gmail SMTP
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    smtp_password: str | None = None
+    smtp_username: str = "proofofwork10@gmail.com"
+    email_from: str = "Proof of Work <proofofwork10@gmail.com>"
     model_config = SettingsConfigDict(
         env_file=".env",
         extra="ignore",

@@ -103,13 +103,13 @@ async def process_job_completion_notifications(
                 notification.body = email_content["body"]
                 await db.commit()
 
-                resend_id = await send_email(
+                email_message_id = await send_email(
                     recipient_email=notification.recipient_email,
                     subject=email_content["subject"],
                     body=email_content["body"],
                 )
 
-                notification.resend_email_id = resend_id
+                notification.resend_email_id = email_message_id
                 notification.status = "sent"
                 notification.sent_at = datetime.now(timezone.utc)
                 notification.error_message = None
