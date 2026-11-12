@@ -31,6 +31,7 @@ def _safe_evidence_context(evidence: Evidence) -> dict[str, Any]:
     }
 
 
+
 async def process_job_completion_notifications(
     notification_ids: list[UUID],
     engine: AsyncEngine,
@@ -46,7 +47,10 @@ async def process_job_completion_notifications(
 
     for notification_id in notification_ids:
         async with session_factory() as db:
-            notification = await db.get(JobNotification, notification_id)
+            notification = await db.get(
+                JobNotification,
+                notification_id,
+            )
 
             if notification is None or notification.status != "pending":
                 continue
@@ -55,10 +59,14 @@ async def process_job_completion_notifications(
                 job = await db.get(Job, notification.job_id)
 
                 if job is None:
-                    raise ValueError("The associated job no longer exists.")
+                    raise ValueError(
+                        "The associated job no longer exists."
+                    )
 
                 evidence_result = await db.execute(
-                    select(Evidence).where(Evidence.job_id == job.id)
+                    select(Evidence).where(
+                        Evidence.job_id == job.id
+                    )
                 )
                 evidence_items = evidence_result.scalars().all()
 
@@ -92,10 +100,11 @@ async def process_job_completion_notifications(
                 email_content = await generate_job_completion_email(
                     recipient_name=notification.recipient_name,
                     recipient_role=(
-                                    "customer"
-                                    if notification.notification_type == "job_completed_customer"
-                                    else "technician"
-                                    ),
+                        "customer"
+                        if notification.notification_type
+                        == "job_completed_customer"
+                        else "technician"
+                    ),
                     job_context=job_context,
                 )
 
@@ -113,26 +122,30 @@ async def process_job_completion_notifications(
                 notification.status = "sent"
                 notification.sent_at = datetime.now(timezone.utc)
                 notification.error_message = None
+
                 await db.commit()
+
                 logger.info(
-                    "Job notification accepted by Gmail API: notification_id=%s",
+                    "Job notification accepted by Gmail API: "
+                    "notification_id=%s",
                     notification.id,
-                    )
+                )
 
             except Exception as exc:
                 logger.exception(
-                "Job completion notification failed: notification_id=%s",
-                notification_id,
+                    "Job completion notification failed: "
+                    "notification_id=%s",
+                    notification_id,
                 )
 
-            await db.rollback()
+                await db.rollback()
 
-            notification = await db.get(
-            JobNotification,
-            notification_id,
-            )
+                failed_notification = await db.get(
+                    JobNotification,
+                    notification_id,
+                )
 
-            if notification is not None:
-                notification.status = "failed"
-                notification.error_message = str(exc)[:2000]
-                await db.commit() 
+                if failed_notification is not None:
+                    failed_notification.status = "failed"
+                    failed_notification.error_message = str(exc)[:2000]
+                    await db.commit()
