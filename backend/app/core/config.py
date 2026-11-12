@@ -20,7 +20,10 @@ class Settings(BaseSettings):
     razorpay_key_id: str = ""
     razorpay_key_secret: str = ""
     razorpay_currency: str = "INR"
-
+    gmail_client_id: str
+    gmail_client_secret: str
+    gmail_refresh_token: str
+    gmail_sender_email: str = "proofofwork10@gmail.com"
     # Gmail SMTP
     smtp_host: str = "smtp.gmail.com"
     smtp_port: int = 587

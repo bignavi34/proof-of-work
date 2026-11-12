@@ -1,33 +1,46 @@
+
 import asyncio
+import base64
 import html
 import logging
-import smtplib
-import ssl
 from email.message import EmailMessage
-from email.utils import make_msgid, parseaddr
+from email.utils import make_msgid
+
+from google.auth.transport.requests import AuthorizedSession
+from google.oauth2.credentials import Credentials
+
 from app.core.config import settings
 
 
 logger = logging.getLogger(__name__)
 
+GMAIL_SEND_URL = (
+    "https://gmail.googleapis.com/gmail/v1/users/me/messages/send"
+)
+
+GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.send"
+
 
 class EmailDeliveryError(Exception):
-    """Raised when SMTP cannot accept an email."""
+    """Raised when Gmail API cannot accept an email."""
 
 
-def _send_smtp_email(
+def _send_gmail_email(
     *,
     recipient_email: str,
     subject: str,
     body: str,
 ) -> str:
-    if not settings.smtp_username or not settings.smtp_password:
-        raise EmailDeliveryError("SMTP credentials are not configured.")
 
-    sender_email = parseaddr(settings.email_from)[1]
-
-    if not sender_email:
-        raise EmailDeliveryError("Invalid email sender address.")
+    if not all([
+        settings.gmail_client_id,
+        settings.gmail_client_secret,
+        settings.gmail_refresh_token,
+        settings.gmail_sender_email,
+    ]):
+        raise EmailDeliveryError(
+            "Gmail API credentials are not configured."
+        )
 
     paragraphs = [
         f"<p>{html.escape(paragraph)}</p>"
@@ -47,57 +60,71 @@ def _send_smtp_email(
     """
 
     message = EmailMessage()
-    message["From"] = settings.email_from
+
+    message["From"] = (
+        f"Proof of Work <{settings.gmail_sender_email}>"
+    )
     message["To"] = recipient_email
+    message["Subject"] = subject
     message["Message-ID"] = make_msgid()
+
     message.set_content(body)
     message.add_alternative(safe_html, subtype="html")
 
     try:
-        context = ssl.create_default_context()
-
-        with smtplib.SMTP(
-            settings.smtp_host,
-            settings.smtp_port,
-            timeout=30,
-        ) as server:
-            server.ehlo()
-            server.starttls(context=context)
-            server.ehlo()
-
-            server.login(
-                settings.smtp_username,
-                settings.smtp_password,
-            )
-
-            refused = server.send_message(
-                message,
-                from_addr=sender_email,
-                to_addrs=[recipient_email],
-            )
-
-            if refused:
-                raise EmailDeliveryError(
-                    "SMTP server refused the recipient."
-                )
-
-        email_id = message["Message-ID"]
-
-        logger.info(
-            "Completion email accepted by SMTP server. message_id=%s",
-            email_id,
+        credentials = Credentials(
+            token=None,
+            refresh_token=settings.gmail_refresh_token,
+            token_uri="https://oauth2.googleapis.com/token",
+            client_id=settings.gmail_client_id,
+            client_secret=settings.gmail_client_secret,
+            scopes=[GMAIL_SCOPE],
         )
 
-        return email_id
+        # AuthorizedSession automatically refreshes expired
+        # access tokens using the stored refresh token.
+        session = AuthorizedSession(credentials)
+
+        raw_message = base64.urlsafe_b64encode(
+            message.as_bytes()
+        ).decode("utf-8")
+
+        response = session.post(
+            GMAIL_SEND_URL,
+            json={"raw": raw_message},
+            timeout=30,
+        )
+
+        response.raise_for_status()
+
+        result = response.json()
+        gmail_message_id = result.get("id")
+
+        if not gmail_message_id:
+            raise EmailDeliveryError(
+                "Gmail API returned no message ID."
+            )
+
+        logger.info(
+            "Email accepted by Gmail API. message_id=%s",
+            gmail_message_id,
+        )
+
+        return gmail_message_id
 
     except EmailDeliveryError:
         raise
+
     except Exception as exc:
-        logger.exception("SMTP email delivery failed.")
+        logger.exception("Gmail API email delivery failed.")
 
         raise EmailDeliveryError(
-            "SMTP server failed to accept the email."
+            "Gmail API failed to accept the email."
         ) from exc
+
+    finally:
+        if "session" in locals():
+            session.close()
 
 
 async def send_email(
@@ -107,15 +134,17 @@ async def send_email(
     body: str,
 ) -> str:
     """
-    Send one transactional email through Gmail SMTP.
+    Send one transactional email through Gmail API.
 
-    Returns the generated email Message-ID.
+    Returns the Gmail API message ID.
     """
 
     recipient_email = recipient_email.strip()
 
     if not recipient_email or len(recipient_email) > 320:
-        raise EmailDeliveryError("Invalid recipient email address.")
+        raise EmailDeliveryError(
+            "Invalid recipient email address."
+        )
 
     if (
         not subject.strip()
@@ -123,24 +152,32 @@ async def send_email(
         or "\r" in subject
         or "\n" in subject
     ):
-        raise EmailDeliveryError("Invalid email subject.")
+        raise EmailDeliveryError(
+            "Invalid email subject."
+        )
 
     if not body.strip() or len(body) > 6000:
-        raise EmailDeliveryError("Invalid email body.")
+        raise EmailDeliveryError(
+            "Invalid email body."
+        )
 
     try:
         return await asyncio.to_thread(
-            _send_smtp_email,
+            _send_gmail_email,
             recipient_email=recipient_email,
             subject=subject,
             body=body,
         )
+
     except EmailDeliveryError:
         raise
+
     except Exception as exc:
-        logger.exception("Unexpected SMTP delivery error.")
+        logger.exception(
+            "Unexpected Gmail API delivery error."
+        )
 
         raise EmailDeliveryError(
-            "Unexpected SMTP delivery failure."
+            "Unexpected Gmail API delivery failure."
         ) from exc
 

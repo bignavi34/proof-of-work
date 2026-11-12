@@ -114,18 +114,25 @@ async def process_job_completion_notifications(
                 notification.sent_at = datetime.now(timezone.utc)
                 notification.error_message = None
                 await db.commit()
-
                 logger.info(
-                    "Job notification accepted by Resend: notification_id=%s",
+                    "Job notification accepted by Gmail API: notification_id=%s",
                     notification.id,
-                )
+                    )
 
             except Exception as exc:
                 logger.exception(
-                    "Job completion notification failed: notification_id=%s",
-                    notification_id,
+                "Job completion notification failed: notification_id=%s",
+                notification_id,
                 )
 
+            await db.rollback()
+
+            notification = await db.get(
+            JobNotification,
+            notification_id,
+            )
+
+            if notification is not None:
                 notification.status = "failed"
                 notification.error_message = str(exc)[:2000]
-                await db.commit()
+                await db.commit() 
